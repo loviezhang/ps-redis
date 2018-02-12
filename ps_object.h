@@ -8,6 +8,18 @@ typedef struct {
 	float weight;
 } PSObject;
 
-struct PSObject *CreatePSObject(void);
+PSObject *CreatePSObject(void);
+
+void UpdatePSObject(RedisModuleCtx *ctx, PSObject *o, float weight, int publish_flag);
+
+void *PSTypeRdbLoad(RedisModuleIO *rdb, int encver);
+
+void PSTypeRdbSave(RedisModuleIO *rdb, void *value);
+
+void PSTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void *value);
+
+size_t PSTypeMemUsage(const void *value);
+
+void PSTypeFree(void *value);
 
 #endif
