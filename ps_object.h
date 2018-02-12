@@ -10,7 +10,11 @@ typedef struct {
 
 PSObject *CreatePSObject(void);
 
-void UpdatePSObject(RedisModuleCtx *ctx, PSObject *o, float weight, int publish_flag);
+void UpdatePSObject(RedisModuleCtx *ctx,
+        RedisModuleString *name,
+        PSObject *o,
+        float weight,
+        int publish_flag);
 
 void *PSTypeRdbLoad(RedisModuleIO *rdb, int encver);
 

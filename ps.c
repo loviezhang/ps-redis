@@ -12,7 +12,7 @@
 static RedisModuleType *PSType;
 
 int PSPullOne(RedisModuleCtx *ctx, RedisModuleString *name) {
-    //RedisModule_Log(ctx, "debug", "pull %s", RedisModule_StringPtrLen(name, NULL));
+    // RedisModule_Log(ctx, "debug", "PS.PULL %s", RedisModule_StringPtrLen(name, NULL));
 
     RedisModuleKey *key = RedisModule_OpenKey(ctx, name, REDISMODULE_READ);
     int type = RedisModule_KeyType(key);
@@ -78,7 +78,7 @@ int PSPushOne(RedisModuleCtx *ctx,
         return REDISMODULE_ERR;
     }
 
-    UpdatePSObject(ctx, hto, weight, publish_flag);
+    UpdatePSObject(ctx, name, hto, weight, publish_flag);
 
     return REDISMODULE_OK;
 }

@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdint.h>
+#include <errno.h>
 #include "ps_object.h"
 #include "ps_config.h"
 #include "constant.h"
@@ -15,23 +16,67 @@ PSObject *CreatePSObject(void) {
     return o;
 }
 
+int Publish(RedisModuleCtx *ctx,
+        RedisModuleString *name, float weight) {
+    size_t name_len;
+    const char *name_ptr = RedisModule_StringPtrLen(name, &name_len);
+    char *msg = RedisModule_Alloc(name_len+1+sizeof(weight));
+    memcpy(msg, name_ptr, name_len);
+    msg[name_len] = '\n';
+    memcpy(msg+name_len+1, &weight, sizeof(weight));
+
+    RedisModuleCallReply *reply;
+    reply = RedisModule_Call(ctx, "PUBLISH",
+            "cb", "ps:ch_update", msg, name_len+1+sizeof(weight));
+    if (reply == NULL) {
+        RedisModule_Log(ctx, "error", "publish failed, "
+                "command: PUBLISH ps:ch_update %s %.4f, "
+                "message: %s",
+                name_ptr,
+                weight,
+                strerror(errno));
+        RedisModule_Free(msg);
+        return REDISMODULE_ERR;
+    }
+
+    RedisModule_Free(msg);
+    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR) {
+        RedisModule_Log(ctx, "error", "publish failed, "
+                "command: PUBLISH ps:ch_update %s %.4f, "
+                "message: %s",
+                name_ptr,
+                weight,
+                RedisModule_CallReplyStringPtr(reply, NULL));
+        RedisModule_FreeCallReply(reply);
+        return REDISMODULE_ERR;
+    }
+
+    RedisModule_Log(ctx, "debug", 
+            "command: PUBLISH ps:ch_update %s %.4f",
+            name_ptr,
+            weight);
+
+    RedisModule_FreeCallReply(reply);
+    return REDISMODULE_OK;
+}
+
 void UpdatePSObject(RedisModuleCtx *ctx,
-        PSObject *o, float weight, int publish_flag) {
-    REDISMODULE_NOT_USED(publish_flag);
+        RedisModuleString *name,
+        PSObject *o,
+        float weight,
+        int publish_flag) {
 
     o->weight = weight;
 
-    RedisModule_Log(ctx, "debug", "new %.4f, old %.4f",
-            o->weight,
-            o->old_weight);
     if (o->weight - o->old_weight > ps_config.update_threshold ||
             o->old_weight - o->weight > ps_config.update_threshold) {
         o->old_weight = o->weight;
+        if (publish_flag != PUBLISH_OFF) {
+            Publish(ctx, name, weight);
+        }
+    } else if (publish_flag == PUBLISH_FORCE) {
+        Publish(ctx, name, weight);
     }
-
-    RedisModule_Log(ctx, "debug", "new %.4f, old %.4f",
-            o->weight,
-            o->old_weight);
 }
 
 void *PSTypeRdbLoad(RedisModuleIO *rdb, int encver) {
