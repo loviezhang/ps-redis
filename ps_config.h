@@ -4,7 +4,7 @@
 #include "redismodule.h"
 
 typedef struct {
-	float update_threshold;
+    float update_threshold;
 } PSConfig;
 
 extern PSConfig ps_config;

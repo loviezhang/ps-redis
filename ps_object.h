@@ -4,8 +4,8 @@
 #include "redismodule.h"
 
 typedef struct {
-	float old_weight;
-	float weight;
+    float old_weight;
+    float weight;
 } PSObject;
 
 PSObject *CreatePSObject(void);
