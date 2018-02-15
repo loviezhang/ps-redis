@@ -7,7 +7,7 @@ SHOBJ_LDFLAGS ?= -shared
 .c.xo:
 	$(CC) -I. $(CFLAGS) $(SHOBJ_CFLAGS) -fPIC -c $< -o $@
 
-ps-redis.so: ps.xo ps_object.xo ps_config.xo
+ps-redis.so: ps.xo ps_object.xo ps_config.xo publish.xo
 	$(LD) -o $@ $^ $(SHOBJ_LDFLAGS) $(LIBS) -lc
 
 ps.xo: ./redismodule.h
@@ -15,6 +15,8 @@ ps.xo: ./redismodule.h
 ps_object.xo: ./redismodule.h
 
 ps_config.xo: ./redismodule.h
+
+publish.xo: ./redismodule.h
 
 clean:
 	rm -rf *.xo *.so
